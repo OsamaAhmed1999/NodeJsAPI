@@ -1,0 +1,58 @@
+var sql = require('mysql');
+
+var con = sql.createConnection({
+    host: "localhost",
+    user: "root",
+    password: "root",
+    database: "nodemysql"
+});
+
+con.connect(function(err){
+    if(err) throw err;
+    console.log("DB connected...")
+});
+
+
+exports.getPost = (req, res) => {
+    res.json({
+        posts: [{title: "First post"}, {title: "Second post"}]
+    });
+};
+
+// exports.getPost = (req, res) => {
+//     res.end("Hello from post controllers");
+// }; 
+
+
+exports.createpost = (req , res)=>{
+
+   // res.send("in creaet posts");
+    let data = {Name: req.body.Name , stu_id : req.body.stu_id};
+    console.log(req.body.Name);
+    let sql = "insert into Student_infoormation SET ?";
+    con.query(sql , data , (err ,result) => {
+        if(err){
+            return res.status(400).json({
+                error : err
+            })
+        }
+        else{
+            
+            res.status(400).json({
+                post : result
+            })
+        }
+    })
+}
+
+
+aconst express = require('express')
+const postControllers = require("../controllers/post")
+
+const router = express.Router();
+
+router.get('/', postControllers.getPost);
+router.post('/createpost', postControllers.createpost);
+
+module.exports = router;
+
