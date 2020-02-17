@@ -22,16 +22,18 @@ exports.signup = async (req, res) =>{
         if (err) throw err;
         else if(result == ""){
             // if not exist then insert
-            pass = set_pass(req.body.Password)
+            pass_salt = set_pass(req.body.Password)
             let data = {
                 Name: req.body.Name,
                 User_id : req.body.User_id,
                 Email: req.body.Email,
-                Password: pass,
+                Password: pass_salt.hashed_password,
+                Salt: pass_salt.salt,
+                Creation_Date: new Date()
             };
      
             let sql = "INSERT INTO User SET ?";
-            con.query(sql , data , (err , result) => {
+            con.query(sql , [data] , (err , result) => {
                 if(err){
                     return res.status(400).json({
                         error : err
@@ -45,7 +47,7 @@ exports.signup = async (req, res) =>{
             });
         }
         else{
-            res.send("Email is taken")
+            res.send("Email is alredy taken")
         }
     })
 }
@@ -53,7 +55,7 @@ exports.signup = async (req, res) =>{
 exports.signin = (req, res) => {
     // Find the user based on email
     const { Email, Password } = req.body
-    sql = `SELECT Name,User_id FROM User WHERE Email = ?`;
+    sql = `SELECT * FROM User WHERE Email = ?`;
     con.query(sql, [Email], (err, result)=> {
         // if error or no user
         if (err || result == ""){
@@ -66,7 +68,7 @@ exports.signin = (req, res) => {
         User_id = result[0].User_id
         
         // if user, authenticate
-        if(!authenticate(Password)){
+        if(!authenticate(Password, result[0].Password, result[0].Salt)){
             return res.status(401).json({
                 error: "Email and password do not matched"
             })
@@ -89,14 +91,15 @@ exports.signout = (req, res) =>{
 }
 
 exports.requireSignin = expressjwt({
-    secret: process.env.JWT_SECRET
+    secret: process.env.JWT_SECRET,
+    userProperty: "auth"
 })
 
 function set_pass(password){
     this._password = password
     this.salt = uuidv1()
     this.hashed_password = encryptPassword(password)
-    return this.hashed_password
+    return {hashed_password, salt}
 
 }
 
@@ -109,10 +112,7 @@ function encryptPassword(password){
     }
 }
 
-function get_pass(){
-    return this._password
-}
-
-function authenticate(plainText){
-    return encryptPassword(plainText) === this.hashed_password
+function authenticate(plainText, db_password, db_salt){
+    this.salt = db_salt
+    return encryptPassword(plainText) === db_password
 }

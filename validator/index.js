@@ -10,7 +10,7 @@ exports.userSignupValidator = (req, res, next) => {
         max: 32
     })
 
-    req.check("User_id", "User Id is Required").notEmpty()
+    // req.check("User_id", "User Id is Required").notEmpty()
 
     req.check("Password", "Password is required").notEmpty();
     req.check("Password")

@@ -7,20 +7,31 @@ const expressValidator = require('express-validator')
 
 const postRoutes = require('./routes/post')
 const authRoutes = require('./routes/auth')
+const userRoutes = require('./routes/user')
+
+const fs = require('fs')
+const cors = require('cors')
 
 app.use(bodyParser.json())
 app.use(expressValidator());
-app.use(cookieParser())
+app.use(cookieParser());
+app.use(cors())
 
-app.get('/', postRoutes)
-app.post('/createpost', postRoutes)
-app.get('/getdata',postRoutes)
-app.delete('/deleteData/:stu_id',postRoutes)
+app.use('/', postRoutes)
+app.use('/', authRoutes)
+app.use('/', userRoutes)
 
-
-app.post('/signup', authRoutes)
-app.post('/signin', authRoutes)
-app.get('/signout', authRoutes)
+app.get("/", (req, res) => {
+  fs.readFile('doc/apiDocs.json', (err, data) => {
+    if(err){
+      res.status(400).json({
+        error: err
+      })
+    }
+    const docs = JSON.parse(data)
+    res.json(docs)
+  })
+})
 
 app.use(function (err, req, res, next) {
     if (err.name === 'UnauthorizedError') {
@@ -28,31 +39,5 @@ app.use(function (err, req, res, next) {
     }
   });
 
-const port = 8080
-app.listen(port, ()=>{
-    // console.log('express: ${port}');
+app.listen(8080, ()=>{
 });
-
-
-
-
-
-
-
-
-
-
-
-
-// const helper = require("./helpers");
-// const http = require('http')
-
-// const server = http.createServer((req, res) => {
-//     res.end("Hello World from Osama")
-
-// });
-
-// server.listen(3000);
-
-// const total = helper.sum(20,30);
-// console.log("Total: ", total);
